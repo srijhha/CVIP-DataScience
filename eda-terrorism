@@ -1,0 +1,144 @@
+import warnings
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+
+# Suppress warnings
+warnings.filterwarnings('ignore')
+
+# Load the terrorism dataset
+terror = pd.read_csv('globalterrorismdb_0718dist.csv', encoding='ISO-8859-1')
+
+# Data Cleaning
+
+# Rename columns for better readability
+terror.rename(columns={
+    'iyear': 'Year',
+    'imonth': 'Month',
+    'iday': 'Day',
+    'country_txt': 'Country',
+    'provstate': 'State',
+    'region_txt': 'Region',
+    'attacktype1_txt': 'AttackType',
+    'target1': 'Target',
+    'nkill': 'Killed',
+    'nwound': 'Wounded',
+    'summary': 'Summary',
+    'gname': 'Group',
+    'targtype1_txt': 'Target_type',
+    'weaptype1_txt': 'Weapon_type',
+    'motive': 'Motive'
+}, inplace=True)
+
+# Select relevant columns
+terror = terror[['Year', 'Month', 'Day', 'Country', 'State', 'Region', 'city', 'latitude', 'longitude', 'AttackType',
+                 'Killed', 'Wounded', 'Target', 'Summary', 'Group', 'Target_type', 'Weapon_type', 'Motive']]
+
+# Handling missing values
+terror['Killed'] = terror['Killed'].fillna(0).astype(int)
+terror['Wounded'] = terror['Wounded'].fillna(0).astype(int)
+
+# Data Exploration
+
+# Head of the dataset
+print("Head of the dataset:")
+print(terror.head())
+
+# Basic information about the dataset
+print("Basic information about the dataset:")
+print(terror.info())
+
+# Describe the dataset
+print("Statistical description of the dataset:")
+print(terror.describe())
+
+# Visualizations
+
+# Year-wise terrorist attacks
+plt.figure(figsize=(12, 6))
+sns.countplot(x='Year', data=terror, palette='RdYlGn_r')
+plt.title('Number of Terrorist Attacks Each Year')
+plt.xticks(rotation=45)
+plt.show()
+
+# Region-wise terrorist attacks
+plt.figure(figsize=(12, 6))
+sns.countplot(x='Region', data=terror, palette='viridis')
+plt.title('Number of Terrorist Attacks by Region')
+plt.xticks(rotation=90)
+plt.show()
+
+# Total number of terrorist attacks in various regions of the world (bar plot)
+plt.figure(figsize=(12, 6))
+region_attacks = terror['Region'].value_counts().reset_index()
+region_attacks.columns = ['Region', 'Attacks']
+sns.barplot(x='Attacks', y='Region', data=region_attacks, palette='viridis')
+plt.title('Total Number of Terrorist Attacks in Various Regions')
+plt.xlabel('Number of Attacks')
+plt.ylabel('Region')
+plt.show()
+
+# Total number of attacks by each country (top 10)
+plt.figure(figsize=(12, 6))
+country_attacks = terror['Country'].value_counts().head(10).reset_index()
+country_attacks.columns = ['Country', 'Attacks']
+sns.barplot(x='Attacks', y='Country', data=country_attacks, palette='viridis')
+plt.title('Total Number of Terrorist Attacks by Country (Top 10)')
+plt.xlabel('Number of Attacks')
+plt.ylabel('Country')
+plt.show()
+
+# Target methods by terrorists
+plt.figure(figsize=(12, 6))
+sns.countplot(x='Target_type', data=terror, palette='Set3', order=terror['Target_type'].value_counts().index)
+plt.title('Number of Terrorist Attacks by Target Type')
+plt.xticks(rotation=90)
+plt.show()
+
+# Most active terrorist group
+plt.figure(figsize=(12, 6))
+top_groups = terror['Group'].value_counts().head(10)
+sns.barplot(x=top_groups.values, y=top_groups.index, palette='magma')
+plt.title('Top 10 Most Active Terrorist Groups')
+plt.xlabel('Number of Attacks')
+plt.show()
+
+# Number of casualties in each country (top 10)
+plt.figure(figsize=(12, 6))
+country_casualties = terror.groupby('Country')['Killed'].sum().sort_values(ascending=False).head(10).reset_index()
+sns.barplot(x='Killed', y='Country', data=country_casualties, palette='viridis')
+plt.title('Number of Casualties by Country (Top 10)')
+plt.xlabel('Number of Casualties')
+plt.ylabel('Country')
+plt.show()
+
+# Most killed city
+plt.figure(figsize=(12, 6))
+city_casualties = terror.groupby('city')['Killed'].sum().sort_values(ascending=False).head(10).reset_index()
+sns.barplot(x='Killed', y='city', data=city_casualties, palette='viridis')
+plt.title('Most Killed Cities')
+plt.xlabel('Number of Casualties')
+plt.ylabel('City')
+plt.show()
+
+# Targets of terrorist attacks
+print("Targets of Terrorist Attacks:")
+print(terror['Target'].unique())
+
+# Deadliest year in terms of the death of people
+deadliest_year = terror.groupby('Year')['Killed'].sum().idxmax()
+print(f"Deadliest Year in Terms of Death of People: {deadliest_year}")
+
+# Word Cloud for Targeted Cities/States
+cities_states = terror['State'].dropna(False)
+plt.figure(figsize=(10, 10))
+wordcloud = WordCloud(
+    background_color='white',
+    width=512,
+    height=384
+).generate(' '.join(cities_states))
+plt.axis('off')
+plt.imshow(wordcloud)
+plt.show()
