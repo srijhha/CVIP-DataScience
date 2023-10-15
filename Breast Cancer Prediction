@@ -1,0 +1,54 @@
+Breast Cancer Prediction
+Importing Libraries 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+​
+# Load the data and drop unnecessary columns
+df = pd.read_csv('breast_cancer_data.csv')
+df.drop(['id', 'Unnamed: 32'], axis=1, inplace=True)
+# Map diagnosis labels to binary (M: 1, B: 0)
+df['diagnosis'] = df['diagnosis'].map({'M': 1, 'B': 0})
+​
+# Split the data into features (X) and labels (y)
+X = df.drop('diagnosis', axis=1)
+y = df['diagnosis']
+​
+Data Exploration and Visualization
+# Calculate and visualize the correlation matrix
+correlation_matrix = df.corr()
+plt.figure(figsize=(12, 10))
+sns.heatmap(correlation_matrix, annot=False, cmap='coolwarm')
+plt.title('Correlation Matrix')
+plt.show()
+​
+Pairwise Scatter Plots
+# Pairwise scatter plots for a subset of features
+sns.pairplot(df, vars=['radius_mean', 'area_mean', 'perimeter_mean', 'texture_mean', 'smoothness_mean'], hue='diagnosis')
+plt.show()
+​
+Split Data into Training and Testing Sets
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+​
+Model Training (Random Forest Classifier)
+# Create and train a Random Forest classifier
+model = RandomForestClassifier(n_estimators=100, min_samples_split=25, max_depth=7, max_features=2)
+model.fit(X_train, y_train)
+​
+# Use the model to make predictions on the test set
+y_pred = model.predict(X_test)
+Model Evaluation and Results
+# Model evaluation
+accuracy = accuracy_score(y_test, y_pred)
+classification_rep = classification_report(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+​
+print("Accuracy: {:.2f}%".format(accuracy * 100))
+print(classification_rep)
+print("Confusion Matrix:")
+print(conf_matrix)
